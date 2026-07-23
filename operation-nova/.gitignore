@@ -1,0 +1,17 @@
+# Never commit the real flag or the rendered flag
+.flag.secret
+flagserver/flag.txt
+
+# Foundry build output
+cache/
+out/
+broadcast/
+lib/
+
+# Runtime state and OCI archives
+state/
+*.oci.tar
+
+# Python
+__pycache__/
+*.pyc

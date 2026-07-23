@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NovaVault Explorer // Operation NOVA</title>
+<style>
+  :root {
+    --bg: #0b0f17;
+    --panel: #121826;
+    --panel-2: #0e1420;
+    --border: #1f2937;
+    --text: #e5e9f0;
+    --muted: #8592a6;
+    --accent: #5b8cff;
+    --green: #35d07f;
+    --amber: #ffb020;
+    --red: #ff5c73;
+    --mono: "SFMono-Regular", "JetBrains Mono", Consolas, "Courier New", monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1020px; margin: 0 auto; padding: 24px 20px 60px; }
+  header.top {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+    border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 20px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .logo {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), #9d5bff);
+    display: grid; place-items: center; font-weight: 700; color: #fff;
+  }
+  .brand h1 { font-size: 17px; margin: 0; letter-spacing: .3px; }
+  .brand .sub { font-size: 12px; color: var(--muted); }
+  .pill {
+    font-size: 12px; padding: 5px 10px; border-radius: 999px;
+    border: 1px solid var(--border); color: var(--muted);
+  }
+  .pill.live { color: var(--green); border-color: rgba(53,208,127,.4); }
+  .pill.wait { color: var(--amber); border-color: rgba(255,176,32,.4); }
+
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px;
+  }
+  .card .k { font-size: 11px; text-transform: uppercase; letter-spacing: .6px;
+             color: var(--muted); margin-bottom: 6px; }
+  .card .v { font-family: var(--mono); font-size: 13px; word-break: break-all; }
+  .row { display: flex; align-items: center; gap: 8px; }
+  .copy {
+    background: var(--panel-2); border: 1px solid var(--border); color: var(--muted);
+    border-radius: 6px; padding: 2px 8px; font-size: 11px; cursor: pointer;
+    flex-shrink: 0;
+  }
+  .copy:hover { color: var(--text); border-color: var(--accent); }
+
+  section { margin-top: 26px; }
+  section h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .6px;
+               color: var(--muted); margin: 0 0 12px; }
+
+  .top-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  #getFlag {
+    background: linear-gradient(135deg, var(--accent), #9d5bff); color: #fff;
+    border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px;
+    font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+  #getFlag:hover { filter: brightness(1.08); }
+  #getFlag:disabled { opacity: .5; cursor: not-allowed; }
+  #flagResult {
+    display: none; margin: -6px 0 20px; padding: 12px 16px; border-radius: 10px;
+    font-family: var(--mono); font-size: 14px; word-break: break-all;
+    border: 1px solid var(--border); background: var(--panel);
+  }
+  #flagResult.show { display: block; }
+  #flagResult.ok  { color: var(--green); border-color: rgba(53,208,127,.4); }
+  #flagResult.no  { color: var(--amber); border-color: rgba(255,176,32,.4); }
+  #flagResult.err { color: var(--red);   border-color: rgba(255,92,115,.4); }
+
+  ol.steps { padding-left: 20px; }
+  ol.steps li { margin-bottom: 6px; }
+  code, pre { font-family: var(--mono); }
+  code.inl { background: var(--panel-2); border: 1px solid var(--border);
+             border-radius: 5px; padding: 1px 6px; font-size: 12px; }
+  pre.src {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; overflow-x: auto; font-size: 12.5px; line-height: 1.55;
+    color: #cdd6e4; max-height: 560px;
+  }
+  pre.src .s-kw  { color: #c792ea; }
+  pre.src .s-ty  { color: #82aaff; }
+  pre.src .s-str { color: #c3e88d; }
+  pre.src .s-com { color: #5f7080; font-style: italic; }
+  pre.src .s-num { color: #f78c6c; }
+  pre.src .s-bi  { color: #ffcb6b; }
+  .bal { display: flex; align-items: baseline; gap: 8px; }
+  .bal .num { font-size: 22px; font-weight: 700; font-family: var(--mono); }
+  .bal .unit { font-size: 12px; color: var(--muted); }
+  .note { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  footer { margin-top: 40px; border-top: 1px solid var(--border);
+           padding-top: 16px; font-size: 12px; color: var(--muted); }
+  a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="logo">N</div>
+      <div>
+        <h1>NovaVault Explorer</h1>
+        <div class="sub">Operation NOVA &middot; DSEC Labs CTF &middot; Tier 0</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span id="status" class="pill wait">connecting...</span>
+      <button id="getFlag">Get flag</button>
+    </div>
+  </header>
+
+  <div id="flagResult"></div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="k">Vault contract</div>
+      <div class="row"><span class="v" id="vault">--</span>
+        <button class="copy" data-copy="vault">copy</button></div>
+    </div>
+    <div class="card">
+      <div class="k">Vault balance</div>
+      <div class="bal"><span class="num" id="bal">--</span><span class="unit">ETH</span></div>
+    </div>
+    <div class="card">
+      <div class="k">RPC endpoint to attack</div>
+      <div class="row"><span class="v" id="rpc">http://localhost:8545</span>
+        <button class="copy" data-copy="rpc">copy</button></div>
+      <div class="note">Chain ID <span id="chain">31337</span></div>
+    </div>
+    <div class="card">
+      <div class="k">Attacker account (or use your own)</div>
+      <div class="row"><span class="v" id="pAddr">--</span>
+        <button class="copy" data-copy="pAddr">copy</button></div>
+      <div class="k" style="margin-top: 12px;">Private key (or use your own)</div>
+      <div class="row"><span class="v" id="pKey">--</span>
+        <button class="copy" data-copy="pKey">copy</button></div>
+    </div>
+  </div>
+
+  <section>
+    <h2>How to play</h2>
+    <ol class="steps">
+      <li>Point your tooling at the RPC above with the pre-funded attacker account (or any wallet you fund yourself).</li>
+      <li>Read <code class="inl">NovaVault.sol</code> below. Find a way to drain it and get the early users funds.</li>
+      <li>Deploy your exploit and trigger it against the deployed vault in this chain.</li>
+      <li>When the vault is empty, hit <strong>Get flag</strong> in the right corner.</li>
+    </ol>
+    <p class="note">Reading the flag out of the container (docker exec, cp, inspect, dumping layers) is out of scope. The only valid solve is draining the vault through its own interface on the RPC.</p>
+  </section>
+
+  <section>
+    <h2>Deployed contract &middot; NovaVault.sol</h2>
+    <pre class="src" id="source">loading source...</pre>
+  </section>
+
+  <footer>
+    NovaVault, an abandoned NovaChain Labs staking prototype.
+    More challenges at <a href="https://dseclabs.xyz">dseclabs.xyz</a>.
+  </footer>
+
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const state = { info: null };
+
+  function fmtEth(wei) {
+    if (wei === undefined || wei === null) return "--";
+    const v = Number(BigInt(wei)) / 1e18;
+    return v.toLocaleString(undefined, { maximumFractionDigits: 4 });
+  }
+
+  // Set textContent only if the element exists, so removing a card from the
+  // markup never throws and knocks the whole refresh into the catch block.
+  const setText = (id, value) => { const el = $(id); if (el) el.textContent = value; };
+
+  async function refresh() {
+    try {
+      const r = await fetch("/api/info");
+      const info = await r.json();
+      state.info = info;
+      setText("rpc", info.rpc);
+      setText("chain", info.chainId);
+      if (info.player) {
+        setText("pAddr", info.player.address);
+        setText("pKey", info.player.privateKey);
+      }
+      const st = $("status");
+      if (!info.ready) {
+        if (st) { st.className = "pill wait"; st.textContent = "deploying..."; }
+        setText("vault", "pending deploy");
+        setText("bal", "--");
+        return;
+      }
+      setText("vault", info.vault);
+      setText("bal", fmtEth(info.currentBalanceWei));
+      if (st) {
+        st.className = "pill live";
+        st.textContent = info.solved ? "SOLVED" : "live · unsolved";
+      }
+    } catch (e) {
+      const st = $("status");
+      if (st) { st.className = "pill wait"; st.textContent = "no connection"; }
+    }
+  }
+
+  function esc(s) {
+    return s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  }
+
+  const SOL_KW = new Set(["pragma","solidity","contract","interface","library","abstract","function","modifier","event","error","struct","enum","mapping","constructor","receive","fallback","returns","return","if","else","for","while","do","break","continue","emit","require","revert","assert","new","delete","using","is","import","as","public","private","internal","external","view","pure","payable","memory","storage","calldata","immutable","constant","indexed","virtual","override","unchecked","type","true","false"]);
+  const SOL_TY = new Set(["address","bool","string","bytes","byte","uint","int","fixed","ufixed","wei","gwei","ether","seconds","minutes","hours","days","weeks"]);
+  const SOL_BI = new Set(["msg","block","tx","this","super","abi","gasleft","blockhash","keccak256","sha256","ecrecover","selfdestruct"]);
+
+  function highlightSolidity(code) {
+    let out = "", i = 0; const n = code.length;
+    const idStart = (c) => /[A-Za-z_$]/.test(c);
+    const idPart = (c) => /[A-Za-z0-9_$]/.test(c);
+    while (i < n) {
+      const c = code[i];
+      if (c === "/" && code[i + 1] === "/") {
+        let j = i + 2; while (j < n && code[j] !== "\n") j++;
+        out += '<span class="s-com">' + esc(code.slice(i, j)) + "</span>"; i = j; continue;
+      }
+      if (c === "/" && code[i + 1] === "*") {
+        let j = i + 2; while (j < n && !(code[j] === "*" && code[j + 1] === "/")) j++;
+        j = Math.min(n, j + 2);
+        out += '<span class="s-com">' + esc(code.slice(i, j)) + "</span>"; i = j; continue;
+      }
+      if (c === '"' || c === "'") {
+        const q = c; let j = i + 1;
+        while (j < n && code[j] !== q) { if (code[j] === "\\") j++; j++; }
+        j = Math.min(n, j + 1);
+        out += '<span class="s-str">' + esc(code.slice(i, j)) + "</span>"; i = j; continue;
+      }
+      if (/[0-9]/.test(c)) {
+        let j = i; while (j < n && /[0-9a-fA-FxX._]/.test(code[j])) j++;
+        out += '<span class="s-num">' + esc(code.slice(i, j)) + "</span>"; i = j; continue;
+      }
+      if (idStart(c)) {
+        let j = i; while (j < n && idPart(code[j])) j++;
+        const w = code.slice(i, j);
+        let cls = "";
+        if (SOL_KW.has(w)) cls = "s-kw";
+        else if (SOL_TY.has(w) || /^(u?int\d*|bytes\d{1,2})$/.test(w)) cls = "s-ty";
+        else if (SOL_BI.has(w)) cls = "s-bi";
+        out += cls ? '<span class="' + cls + '">' + esc(w) + "</span>" : esc(w);
+        i = j; continue;
+      }
+      out += esc(c); i++;
+    }
+    return out;
+  }
+
+  async function loadSource() {
+    try {
+      const r = await fetch("/api/source");
+      const data = await r.json();
+      $("source").innerHTML = highlightSolidity(data.source);
+    } catch (e) {
+      $("source").textContent = "// could not load source";
+    }
+  }
+
+  $("getFlag").addEventListener("click", async () => {
+    const out = $("flagResult");
+    out.className = "show"; out.textContent = "checking on-chain state...";
+    try {
+      const r = await fetch("/flag");
+      const data = await r.json();
+      if (data.solved) {
+        out.className = "show ok"; out.textContent = "FLAG  --> " + data.flag;
+      } else {
+        out.className = "show no"; out.textContent = data.message;
+      }
+    } catch (e) {
+      out.className = "show err"; out.textContent = "request failed";
+    }
+  });
+
+  document.querySelectorAll(".copy").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const el = $(btn.dataset.copy);
+      if (!el) return;
+      navigator.clipboard.writeText(el.textContent.trim());
+      const old = btn.textContent; btn.textContent = "copied";
+      setTimeout(() => (btn.textContent = old), 1000);
+    });
+  });
+
+  loadSource();
+  refresh();
+  setInterval(refresh, 4000);
+</script>
+</body>
+</html>
