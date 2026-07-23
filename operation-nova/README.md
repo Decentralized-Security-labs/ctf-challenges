@@ -12,9 +12,9 @@ moved on to bigger money, and nobody ever took it down.
 
 It is still live. It still holds real deposits from a handful of early users who
 never withdrew, and it still runs the exact code that shipped that year, audited
-by nobody. The withdrawal path looks careful. There is a reentrancy guard on it,
-the balance is written before the transfer, all the boxes an auditor checks in the
-first thirty seconds. Whoever wrote it had read the classic writeups.
+by nobody. The withdrawal path looks careful. There is guards on it, balances are
+written before the transfer, all the boxes an auditor checks in the first thirty seconds.
+Whoever wrote it had read the classic writeups.
 
 They just did not read them twice. A second feature got bolted on after launch to
 pay a loyalty bonus, and it was waved through as low risk because it only hands out

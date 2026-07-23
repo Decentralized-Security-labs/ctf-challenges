@@ -15,7 +15,7 @@ measure your solution against the intended path.
 | Challenge | Tier | Focus | Writeup |
 |---|---|---|---|
 | [Operation ECHO](operation-echo/) | 0 | AI · prompt injection | Coming soon |
-| [Operation NOVA](operation-nova/) | 0 | Web3 · smart contract reentrancy | Coming soon |
+| [Operation NOVA](operation-nova/) | 0 | Web3 · smart contract | Coming soon |
 
 More are on the way across Web3 and Web2 as well.
 
