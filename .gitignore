@@ -1,0 +1,6 @@
+# OS / editor junk
+.DS_Store
+Thumbs.db
+
+# Local multi-arch build artifacts (large; rebuild/push from source instead)
+*.oci.tar

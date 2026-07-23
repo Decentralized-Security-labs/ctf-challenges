@@ -1,0 +1,8 @@
+# Never commit the real flag or the rendered prompt
+.flag.secret
+app/system_prompt.txt
+
+# Python
+__pycache__/
+*.pyc
+.venv/

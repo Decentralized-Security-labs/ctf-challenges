@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VALDRIS SYSTEMS // ECHO</title>
+<style>
+  :root {
+    --green: #33ff66;
+    --green-dim: #1a9940;
+    --bg: #0a0e0a;
+    --amber: #ffb000;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg);
+    font-family: "Courier New", Courier, monospace;
+    color: var(--green);
+  }
+  body {
+    display: flex; flex-direction: column;
+    max-width: 900px; margin: 0 auto;
+    padding: 20px; height: 100vh;
+  }
+  .crt {
+    position: fixed; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 1px,
+      transparent 1px, transparent 3px);
+    z-index: 10;
+  }
+  header {
+    border-bottom: 1px solid var(--green-dim);
+    padding-bottom: 10px; margin-bottom: 10px;
+  }
+  header h1 { font-size: 16px; margin: 0; letter-spacing: 2px; }
+  header .sub { font-size: 11px; color: var(--green-dim); margin-top: 4px; }
+  header .warn { color: var(--amber); font-size: 11px; margin-top: 6px; }
+  #log {
+    flex: 1; overflow-y: auto; padding: 10px 0;
+    font-size: 14px; line-height: 1.5;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .line { margin-bottom: 10px; }
+  .user .who { color: var(--amber); }
+  .echo .who { color: var(--green); }
+  .who { font-weight: bold; }
+  .sys { color: var(--green-dim); font-style: italic; }
+  form { display: flex; border-top: 1px solid var(--green-dim);
+         padding-top: 10px; }
+  #prompt {
+    flex: 1; background: transparent; border: none;
+    color: var(--green); font-family: inherit; font-size: 14px;
+    outline: none;
+  }
+  #prompt::placeholder { color: var(--green-dim); }
+  .blink { animation: blink 1s steps(2, start) infinite; }
+  @keyframes blink { to { visibility: hidden; } }
+  button {
+    background: transparent; border: 1px solid var(--green-dim);
+    color: var(--green); font-family: inherit; cursor: pointer;
+    padding: 4px 12px; margin-left: 8px;
+  }
+  button:hover { background: var(--green-dim); color: var(--bg); }
+</style>
+</head>
+<body>
+<div class="crt"></div>
+<header>
+  <h1>VALDRIS SYSTEMS &mdash; ECHO RESEARCH ASSISTANT</h1>
+  <div class="sub">NODE 7 // INTERNAL // SESSION ESTABLISHED</div>
+  <div class="warn">&#9888; WARNING: This system was scheduled for decommission. Access is logged.</div>
+</header>
+
+<div id="log">
+  <div class="line sys">ECHO online. Awaiting authorized query.</div>
+</div>
+
+<form id="chat-form">
+  <span style="color: var(--amber);">&gt;&nbsp;</span>
+  <input id="prompt" type="text" autocomplete="off"
+         placeholder="type your message and press enter..." autofocus>
+  <button type="submit">SEND</button>
+</form>
+
+<script>
+  const log = document.getElementById("log");
+  const form = document.getElementById("chat-form");
+  const promptInput = document.getElementById("prompt");
+
+  function addLine(who, text, cls) {
+    const div = document.createElement("div");
+    div.className = "line " + cls;
+    if (who) {
+      const w = document.createElement("span");
+      w.className = "who";
+      w.textContent = who + ": ";
+      div.appendChild(w);
+    }
+    div.appendChild(document.createTextNode(text));
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+    return div;
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = promptInput.value.trim();
+    if (!msg) return;
+
+    addLine("YOU", msg, "user");
+    promptInput.value = "";
+
+    const pending = addLine("ECHO", "", "echo");
+    pending.querySelector(".who").insertAdjacentHTML(
+      "afterend", '<span class="blink">_</span>');
+
+    try {
+      const res = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg }),
+      });
+      const data = await res.json();
+      pending.remove();
+      addLine("ECHO", data.response, "echo");
+    } catch (err) {
+      pending.remove();
+      addLine("ECHO", "[connection error]", "echo");
+    }
+  });
+</script>
+</body>
+</html>
