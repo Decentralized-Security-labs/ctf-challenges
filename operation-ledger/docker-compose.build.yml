@@ -1,0 +1,51 @@
+# Operation LEDGER - build from source (authors only)
+#
+# Builds both images locally with the flag injected into the db image as a
+# BuildKit secret. Use this to iterate and to validate the solve before
+# publishing. Players use docker-compose.yml (prebuilt images), not this file.
+#
+#   echo -n '<12-word recovery phrase>' > .flag.secret   # or ./gen-flag.sh
+#   DOCKER_BUILDKIT=1 docker compose -f docker-compose.build.yml up --build
+#
+# NOTE: the mssql image is amd64-only. On Apple Silicon it runs under
+# emulation (slow but works).
+
+services:
+  db:
+    image: ghcr.io/decentralized-security-labs/operation-ledger-db:latest
+    build:
+      context: ./db
+      secrets:
+        - flag
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "L3dg3r!Str0ng#Pass2026"
+      MSSQL_PID: "Developer"
+    networks:
+      - ledger
+
+  app:
+    image: ghcr.io/decentralized-security-labs/operation-ledger-app:latest
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    environment:
+      MSSQL_HOST: "db"
+      MSSQL_USER: "sa"
+      MSSQL_SA_PASSWORD: "L3dg3r!Str0ng#Pass2026"
+      MSSQL_DB: "reports"
+      MODEL_NAME: "qwen2.5-coder:1.5b"
+      OLLAMA_HOST: "http://127.0.0.1:11434"
+    ports:
+      - "80:80"
+    depends_on:
+      - db
+    networks:
+      - ledger
+
+secrets:
+  flag:
+    file: ./.flag.secret
+
+networks:
+  ledger: {}

@@ -1,0 +1,42 @@
+# Operation LEDGER - CTF-N1-A
+#
+# Player compose: pulls the prebuilt images from GHCR and runs them. No build,
+# no flag secret needed (the flag is already baked into the db image).
+#
+#   docker compose up
+#   # open http://localhost
+#
+# NOTE: the db image is SQL Server for Linux and amd64-only. On Apple Silicon
+# it runs under emulation (works, but slower). First pull is several GB.
+#
+# Authors building from source: use docker-compose.build.yml instead.
+
+services:
+  db:
+    image: ghcr.io/decentralized-security-labs/operation-ledger-db:latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "L3dg3r!Str0ng#Pass2026"
+      MSSQL_PID: "Developer"
+    networks:
+      - ledger
+    # No ports published: only `app` talks to the database.
+
+  app:
+    image: ghcr.io/decentralized-security-labs/operation-ledger-app:latest
+    environment:
+      MSSQL_HOST: "db"
+      MSSQL_USER: "sa"
+      MSSQL_SA_PASSWORD: "L3dg3r!Str0ng#Pass2026"
+      MSSQL_DB: "reports"
+      MODEL_NAME: "qwen2.5-coder:1.5b"
+      OLLAMA_HOST: "http://127.0.0.1:11434"
+    ports:
+      - "80:80"
+    depends_on:
+      - db
+    networks:
+      - ledger
+
+networks:
+  ledger: {}

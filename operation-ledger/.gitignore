@@ -1,0 +1,10 @@
+# Never commit the real flag or any rendered key material
+.flag.secret
+db/secrets/
+**/whale_047.key
+*.oci.tar
+
+# Python
+__pycache__/
+*.pyc
+.venv/
