@@ -1,0 +1,73 @@
+name: Publish Operation LEDGER
+
+# Builds and pushes the prebuilt Operation LEDGER images to GHCR.
+# Run it from the browser: Actions tab -> "Publish Operation LEDGER" -> Run workflow.
+#
+# Requires a repository secret named LEDGER_FLAG holding the 12-word recovery
+# phrase (Settings -> Secrets and variables -> Actions -> New repository secret).
+# The flag is written to .flag.secret only inside the runner and injected into
+# the db image as a BuildKit secret, so it never lands in the repo or a layer.
+#
+# After the first run, set both GHCR packages to Public (Org -> Packages).
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Image tag (in addition to latest)"
+        required: true
+        default: "v1.0"
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  APP_IMAGE: ghcr.io/decentralized-security-labs/operation-ledger-app
+  DB_IMAGE: ghcr.io/decentralized-security-labs/operation-ledger-db
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Write flag secret (runner only)
+        run: printf '%s' "${{ secrets.LEDGER_FLAG }}" > operation-ledger/.flag.secret
+
+      - name: Build and push app (multi-arch)
+        uses: docker/build-push-action@v6
+        with:
+          context: operation-ledger
+          file: operation-ledger/app/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.APP_IMAGE }}:latest
+            ${{ env.APP_IMAGE }}:${{ inputs.version }}
+
+      - name: Build and push db (amd64, flag injected)
+        uses: docker/build-push-action@v6
+        with:
+          context: operation-ledger/db
+          platforms: linux/amd64
+          push: true
+          secret-files: |
+            flag=operation-ledger/.flag.secret
+          tags: |
+            ${{ env.DB_IMAGE }}:latest
+            ${{ env.DB_IMAGE }}:${{ inputs.version }}
